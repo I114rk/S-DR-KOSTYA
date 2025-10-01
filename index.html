@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Stimulation Clicker — Подарок для Кости</title>
+  <style>
+    :root{
+      --bg:#0f1724; --card:#0b1220; --accent:#6ee7b7; --accent2:#60a5fa; --glass: rgba(255,255,255,0.04);
+      --glass-2: rgba(255,255,255,0.02); --gold: #ffd166;
+      --glass-border: rgba(255,255,255,0.06);
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    html,body{height:100%;margin:0;background: radial-gradient(1200px 600px at 10% 10%, rgba(96,165,250,0.06), transparent),
+      radial-gradient(800px 400px at 90% 90%, rgba(110,231,183,0.04), transparent), linear-gradient(180deg,#071225 0%, #081224 100%);
+      color:#dbeafe;}
+    .wrap{max-width:1100px;margin:28px auto;padding:24px;display:grid;grid-template-columns:1fr 420px;gap:20px}
+
+    header{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between}
+    h1{margin:0;font-size:20px;letter-spacing:0.6px}
+    .sub{color:#9fb4d8;font-size:13px}
+
+    .game{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:14px;padding:22px;box-shadow:0 6px 30px rgba(2,6,23,0.7);border:1px solid var(--glass-border)}
+    .left{display:flex;flex-direction:column;gap:18px}
+
+    .big-click{display:flex;align-items:center;justify-content:center;height:260px;border-radius:12px;background:linear-gradient(180deg,#071a34,#062233);border:1px solid rgba(255,255,255,0.04);cursor:pointer;position:relative;overflow:hidden}
+    .big-click:active{transform:scale(.995)}
+    .big-click .pulse{position:absolute;width:600px;height:600px;border-radius:50%;left:50%;top:50%;transform:translate(-50%,-50%);background:radial-gradient(circle at center, rgba(96,165,250,0.08), transparent 20%);opacity:0;pointer-events:none}
+    .click-count{font-size:40px;font-weight:700;filter:drop-shadow(0 6px 18px rgba(3,7,18,0.8));}
+    .click-sub{color:#93c5fd;font-weight:600}
+
+    .stats{display:flex;gap:12px;flex-wrap:wrap}
+    .stat{background:var(--glass);padding:10px 14px;border-radius:10px;border:1px solid var(--glass-border);min-width:150px}
+    .stat .label{font-size:12px;color:#9fb4d8}
+    .stat .value{font-weight:700;margin-top:6px}
+
+    .shop{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+    .upgrade{background:linear-gradient(180deg, rgba(255,255,255,0.017), rgba(255,255,255,0.01));padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);min-height:86px;position:relative;overflow:hidden}
+    .upgrade.locked{filter:grayscale(.2) opacity:.54}
+    .upgrade h3{margin:0;font-size:15px}
+    .up-desc{font-size:12px;color:#9fb4d8;margin-top:6px}
+    .up-footer{position:absolute;right:10px;bottom:10px;display:flex;gap:6px;align-items:center}
+    .btn-buy{background:linear-gradient(90deg,var(--accent),var(--accent2));padding:8px 12px;border-radius:8px;border:none;color:#042a1f;font-weight:800;cursor:pointer}
+    .btn-buy:disabled{opacity:.6;cursor:not-allowed}
+    .cost{font-weight:800;display:inline-block;padding:6px 8px;border-radius:8px;background:rgba(0,0,0,0.18);border:1px solid rgba(255,255,255,0.03)}
+
+    .right{display:flex;flex-direction:column;gap:12px}
+    .panel{background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);padding:14px;border-radius:12px;border:1px solid var(--glass-border)}
+
+    .progress{height:12px;background:var(--glass-2);border-radius:12px;overflow:hidden}
+    .progress > i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0}
+
+    footer{grid-column:1/-1;text-align:center;color:#9fb4d8;font-size:13px;margin-top:8px}
+
+    /* modal */
+    .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:linear-gradient(180deg, rgba(2,6,23,0.6), rgba(2,6,23,0.9));z-index:40}
+    .modal.open{display:flex}
+    .modal-card{background:linear-gradient(180deg,#041627,#072238);padding:26px;border-radius:14px;text-align:center;max-width:720px;border:1px solid rgba(255,255,255,0.06)}
+    .modal h2{margin:0 0 6px 0;font-size:30px}
+    .modal p{margin:0 0 14px 0;color:#a7c1e9}
+
+    /* confetti */
+    .confetti{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+    .confetti i{position:absolute;width:10px;height:16px;background:#fff;opacity:0;transform-origin:center;}
+
+    /* responsive */
+    @media(max-width:980px){.wrap{grid-template-columns:1fr;}.right{order:2}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Stimulation Clicker — подарок для <strong>Кости</strong></h1>
+        <div class="sub">Добейся 1 000 000 кликов — получишь поздравление 🎉</div>
+      </div>
+      <div class="sub">Работает без сервера — просто открой HTML (GitHub Pages OK)</div>
+    </header>
+
+    <main class="game left">
+      <div class="big-click" id="bigClick" title="Кликни!">
+        <div class="pulse" id="pulse"></div>
+        <div style="text-align:center">
+          <div class="click-count" id="totalDisplay">0</div>
+          <div class="click-sub" id="perClick">+1 за клик</div>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <div class="label">Всего кликов</div>
+          <div class="value" id="totalAll">0</div>
+        </div>
+        <div class="stat">
+          <div class="label">Клики в секунду (CPS)</div>
+          <div class="value" id="cps">0</div>
+        </div>
+        <div class="stat">
+          <div class="label">Умножитель за клик</div>
+          <div class="value" id="mult">1x</div>
+        </div>
+        <div class="stat">
+          <div class="label">Сохранение</div>
+          <div class="value" id="savedTime">—</div>
+        </div>
+      </div>
+
+      <section style="margin-top:6px">
+        <h2 style="font-size:16px;margin:0 0 8px 0">Магазин улучшений</h2>
+        <div class="shop" id="shop"></div>
+      </section>
+    </main>
+
+    <aside class="right">
+      <div class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-size:13px;color:#9fb4d8">Прогресс к поздравлению</div>
+            <div style="font-weight:800;font-size:18px;margin-top:6px" id="goalText">0 / 1 000 000</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:12px;color:#9fb4d8">Ваше имя в игре</div>
+            <input id="playerName" value="Костя" style="margin-top:6px;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit;font-weight:700" />
+          </div>
+        </div>
+        <div style="margin-top:12px">
+          <div class="progress"><i id="progressBar"></i></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div style="display:flex;gap:8px;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-size:13px;color:#9fb4d8">Автосохранение</div>
+            <div style="font-weight:700;margin-top:6px">Куки, 365 дней</div>
+          </div>
+          <div>
+            <button id="resetBtn" class="btn-buy" style="background:linear-gradient(90deg,#ff7a7a,#ffb86b);">Сброс</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" style="text-align:center">
+        <div style="font-size:13px;color:#9fb4d8">Советы</div>
+        <div style="margin-top:8px">Покупай улучшения, чтобы увеличить CPS и множитель. Некоторые улучшения открываются при достижении порогов.</div>
+      </div>
+    </aside>
+
+    <footer>Сделано с любовью — открой этот файл в браузере и добавь на GitHub Pages как static HTML.</footer>
+  </div>
+
+  <div class="modal" id="modal">
+    <div class="modal-card">
+      <div class="confetti" id="confetti"></div>
+      <h2 id="modalTitle">Поздравляем!</h2>
+      <p id="modalText">Ты достиг 1 000 000 кликов — магическое поздравление ждёт тебя.</p>
+      <div style="margin-top:14px"><button class="btn-buy" id="modalClose">Закрыть</button></div>
+    </div>
+  </div>
+
+  <script>
+    // --- Cookie helpers (сохраняем состояние в cookie) ---
+    function setCookie(name, value, days){
+      const d = new Date(); d.setTime(d.getTime() + (days*24*60*60*1000));
+      document.cookie = name + "=" + encodeURIComponent(value) + ";expires="+d.toUTCString()+";path=/";
+    }
+    function getCookie(name){
+      const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+      return v ? decodeURIComponent(v.pop()) : null;
+    }
+
+    // --- Game state ---
+    const GOAL = 1000000;
+    let state = {
+      totalClicks: 0,
+      currency: 0, // same as totalClicks for simplicity
+      cps: 0,
+      perClick: 1,
+      mult: 1,
+      upgrades: {},
+      lastSave: null,
+    };
+
+    // --- Upgrades catalog ---
+    const UPGRADES = [
+      {id:'auto1', name:'Печатный помощник', desc:'+1 CPS', baseCost:12, cps:1, perClick:0, unlockAt:0},
+      {id:'auto2', name:'Кнопочный друг', desc:'+5 CPS', baseCost:90, cps:5, perClick:0, unlockAt:50},
+      {id:'multi1', name:'Усиленный палец', desc:'+1 к клику', baseCost:30, cps:0, perClick:1, unlockAt:10},
+      {id:'auto3', name:'Сборщик кликов', desc:'+20 CPS', baseCost:600, cps:20, perClick:0, unlockAt:200},
+      {id:'multi2', name:'Рука из стали', desc:'x2 к клику', baseCost:1800, cps:0, perClick:0, mult:2, unlockAt:1000},
+      {id:'mega1', name:'Клик-ферма', desc:'+100 CPS', baseCost:10000, cps:100, unlockAt:5000},
+      {id:'multi3', name:'Мощный удар', desc:'x3 к клику', baseCost:50000, mult:3, unlockAt:20000},
+      {id:'auto4', name:'Армия мышей', desc:'+1000 CPS', baseCost:200000, cps:1000, unlockAt:50000},
+      {id:'finalBoost', name:'Ускоритель праздника', desc:'Большой бонус при покупке', baseCost:350000, cps:5000, unlockAt:200000}
+    ];
+
+    // create shop tiles
+    const shopEl = document.getElementById('shop');
+    function makeTile(u){
+      const div = document.createElement('div'); div.className='upgrade'; div.id='up_'+u.id;
+      div.innerHTML = `<h3>${u.name}</h3><div class='up-desc'>${u.desc}</div>
+        <div class='up-footer'><div class='cost' id='cost_${u.id}'>${u.baseCost}</div><button class='btn-buy' id='buy_${u.id}'>Купить</button></div>`;
+      shopEl.appendChild(div);
+      document.getElementById('buy_'+u.id).addEventListener('click', ()=>buyUpgrade(u));
+    }
+    UPGRADES.forEach(makeTile);
+
+    // update shop visuals
+    function refreshShop(){
+      UPGRADES.forEach(u=>{
+        const tile = document.getElementById('up_'+u.id);
+        const costEl = document.getElementById('cost_'+u.id);
+        const buyBtn = document.getElementById('buy_'+u.id);
+        const times = state.upgrades[u.id]||0;
+        const cost = Math.floor(u.baseCost * Math.pow(1.17, times));
+        costEl.textContent = cost.toLocaleString();
+        buyBtn.disabled = state.currency < cost;
+        // locked if unlock threshold not reached
+        if(state.totalClicks < (u.unlockAt||0)){
+          tile.classList.add('locked');
+          buyBtn.disabled = true;
+          tile.querySelector('.up-desc').textContent = u.desc + ' — откроется при ' + (u.unlockAt||0).toLocaleString() + ' кликах';
+        } else {
+          tile.classList.remove('locked');
+          tile.querySelector('.up-desc').textContent = u.desc + (times?(' (куплено: '+times+')'):'');
+        }
+      });
+    }
+
+    // buy upgrade
+    function buyUpgrade(u){
+      const times = state.upgrades[u.id]||0;
+      const cost = Math.floor(u.baseCost * Math.pow(1.17, times));
+      if(state.currency < cost) return;
+      state.currency -= cost; state.totalClicks -= cost; // currency tied to clicks so spending reduces progress
+      state.upgrades[u.id] = times+1;
+      if(u.cps) state.cps += u.cps;
+      if(u.perClick) state.perClick += u.perClick;
+      if(u.mult) state.mult *= u.mult;
+
+      // special: finalBoost gives a one-time big bonus
+      if(u.id==='finalBoost'){
+        // immediate burst
+        state.currency += 250000;
+        state.totalClicks += 250000;
+      }
+
+      pulseAnim(); refreshAll(); saveState();
+    }
+
+    // click handling
+    const big = document.getElementById('bigClick');
+    big.addEventListener('click', ()=>{
+      const gained = Math.floor(state.perClick * state.mult);
+      state.currency += gained;
+      state.totalClicks += gained;
+      animateClick(gained);
+      refreshAll();
+      saveState();
+    });
+
+    function animateClick(gained){
+      const pulse = document.getElementById('pulse');
+      pulse.style.transition='none'; pulse.style.opacity='1';
+      pulse.style.transform='translate(-50%,-50%) scale(.1)';
+      requestAnimationFrame(()=>{pulse.style.transition='all 700ms cubic-bezier(.2,.9,.2,1)'; pulse.style.transform='translate(-50%,-50%) scale(1)'; pulse.style.opacity='1';});
+      setTimeout(()=>{pulse.style.opacity='0'},700);
+
+      const cnt = document.createElement('div');
+      cnt.textContent = '+'+gained;
+      cnt.style.position='absolute';cnt.style.left='50%';cnt.style.top='38%';cnt.style.transform='translate(-50%,-50%)';cnt.style.fontWeight='800';cnt.style.color='#fff';
+      cnt.style.pointerEvents='none'; document.getElementById('bigClick').appendChild(cnt);
+      cnt.animate([{transform:'translateY(0) scale(1)',opacity:1},{transform:'translateY(-60px) scale(0.9)',opacity:0}],{duration:900}).onfinish=()=>cnt.remove();
+    }
+    function pulseAnim(){const p=document.getElementById('pulse');p.style.opacity='1';setTimeout(()=>p.style.opacity='0',600)}
+
+    // passive CPS tick
+    setInterval(()=>{
+      if(state.cps>0){
+        const gain = state.cps;
+        state.currency += gain; state.totalClicks += gain; refreshAll();
+      }
+    },1000);
+
+    // UI refresh
+    function refreshAll(){
+      document.getElementById('totalDisplay').textContent = state.currency.toLocaleString();
+      document.getElementById('totalAll').textContent = state.totalClicks.toLocaleString();
+      document.getElementById('cps').textContent = state.cps.toLocaleString();
+      document.getElementById('mult').textContent = state.mult + 'x';
+      document.getElementById('perClick').textContent = '+'+state.perClick+' за клик';
+      document.getElementById('goalText').textContent = state.totalClicks.toLocaleString() + ' / ' + GOAL.toLocaleString();
+      const p = Math.min(1, state.totalClicks/GOAL);
+      document.getElementById('progressBar').style.width = (p*100)+'%';
+      document.getElementById('savedTime').textContent = state.lastSave ? (new Date(state.lastSave)).toLocaleString() : '—';
+      refreshShop();
+
+      // check goal
+      if(state.totalClicks >= GOAL && !state.celebrated){
+        showCongrats(); state.celebrated = true; saveState();
+      }
+    }
+
+    // save/load
+    function saveState(){
+      state.lastSave = Date.now();
+      const toSave = {
+        totalClicks: state.totalClicks,
+        currency: state.currency,
+        cps: state.cps,
+        perClick: state.perClick,
+        mult: state.mult,
+        upgrades: state.upgrades,
+        lastSave: state.lastSave,
+        celebrated: state.celebrated||false
+      };
+      try{ setCookie('stimulation_save', JSON.stringify(toSave), 365); }
+      catch(e){ console.warn('Ошибка сохранения cookie',e); }
+      document.getElementById('savedTime').textContent = new Date(state.lastSave).toLocaleString();
+    }
+    function loadState(){
+      const raw = getCookie('stimulation_save');
+      if(!raw) return;
+      try{
+        const s = JSON.parse(raw);
+        state.totalClicks = s.totalClicks||0; state.currency = s.currency||0; state.cps = s.cps||0; state.perClick = s.perClick||1; state.mult = s.mult||1;
+        state.upgrades = s.upgrades||{}; state.lastSave = s.lastSave||null; state.celebrated = s.celebrated||false;
+      }catch(e){console.warn('Ошибка загрузки',e)}
+    }
+
+    // quick reset
+    document.getElementById('resetBtn').addEventListener('click', ()=>{
+      if(confirm('Сбросить прогресс?')){
+        state = {totalClicks:0,currency:0,cps:0,perClick:1,mult:1,upgrades:{},lastSave:null};
+        setCookie('stimulation_save','',-1); refreshAll();
+      }
+    });
+
+    // load on start
+    loadState(); refreshAll();
+
+    // autosave every 5 seconds
+    setInterval(saveState,5000);
+
+    // player name binding
+    const playerName = document.getElementById('playerName'); playerName.addEventListener('input', ()=>{});
+
+    // congratulate modal
+    const modal = document.getElementById('modal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalText = document.getElementById('modalText');
+    const confettiRoot = document.getElementById('confetti');
+
+    function makeConfetti(){
+      confettiRoot.innerHTML='';
+      const colors = ['#ff7a7a','#ffd166','#6ee7b7','#60a5fa','#c084fc'];
+      for(let i=0;i<80;i++){
+        const el = document.createElement('i');
+        el.style.left = Math.random()*100 + '%'; el.style.top = (-10 - Math.random()*20)+'%';
+        el.style.background = colors[Math.floor(Math.random()*colors.length)];
+        el.style.transform = 'rotate('+Math.random()*360+'deg)';
+        el.style.opacity = Math.random();
+        const dur = 2000 + Math.random()*2500;
+        el.animate([{transform:el.style.transform+' translateY(0)',opacity:1,offset:0},{transform:el.style.transform+' translateY(120vh)',opacity:1,offset:.7},{opacity:0,offset:1}],{duration:dur,iterations:1,easing:'cubic-bezier(.2,.7,.2,1)'});
+        confettiRoot.appendChild(el);
+      }
+    }
+
+    function showCongrats(){
+      const name = (document.getElementById('playerName').value || 'Костя');
+      modalTitle.textContent = `С ДНЁМ РОЖДЕНИЯ, ${name.toUpperCase()}!`;
+      modalText.innerHTML = `Поздравляем — ты набрал ${state.totalClicks.toLocaleString()} кликов!<br><strong>13 лет</strong> — волшебный возраст. Наслаждайся подарком! 🎉`;
+      modal.classList.add('open'); makeConfetti();
+    }
+    document.getElementById('modalClose').addEventListener('click', ()=>{modal.classList.remove('open')});
+
+    // initial unlock logic and shop refresh every second
+    setInterval(()=>{refreshAll();},1000);
+  </script>
+</body>
+</html>
